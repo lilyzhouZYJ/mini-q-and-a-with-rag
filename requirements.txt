@@ -1,0 +1,8 @@
+beautifulsoup4
+bs4
+python-dotenv
+
+langchain-text-splitters
+langchain-community
+langgraph
+langchain[openai]
