@@ -1,6 +1,8 @@
 beautifulsoup4
 bs4
 python-dotenv
+numpy
+tiktoken
 
 langchain-text-splitters
 langchain-community
