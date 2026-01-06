@@ -1,12 +1,13 @@
 # Mini Q&A using RAG
 
-The `rag/` directory contains a lightweight Q&A application using RAG. This implementation does *not* use LangChain.
+The `rag/` directory contains a lightweight Q&A application using RAG. The application supports retrieving text content from a provided file. This implementation does *not* use LangChain.
 
 ## Getting started
 
 To run the app, execute:
 
-```
+```bash
+pip install -r rag/requirements.txt
 python3 rag/q_and_a_app.py --path some_file.txt
 ```
 
