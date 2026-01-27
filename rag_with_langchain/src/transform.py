@@ -17,7 +17,7 @@ from typing import List, Dict, Any
 from langchain.schema import Document
 from langchain.chat_models import init_chat_model
 
-from config import TRANSFORM_MODEL, MODEL_PROVIDER
+from config import TRANSFORM_MODEL_NAME, MODEL_PROVIDER
 
 def _refine_chunk_prompt(chunk_text: str) -> str:
     return f"""You are a text refinement assistant. Your task is to clean and refine the following text chunk to make it self-contained and semantically coherent.
@@ -142,7 +142,7 @@ def transform_chunks(
         return chunks
     
     # Initialize LLM for transformations
-    llm = init_chat_model(TRANSFORM_MODEL, model_provider=MODEL_PROVIDER)
+    llm = init_chat_model(TRANSFORM_MODEL_NAME, model_provider=MODEL_PROVIDER)
     
     transformed = []
     
