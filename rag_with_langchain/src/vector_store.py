@@ -13,7 +13,7 @@ from langchain_openai import OpenAIEmbeddings
 from config import CHROMA_PERSIST_DIR, OPENAI_API_KEY, EMBEDDING_MODEL_NAME
 
 class ChromaVectorStore:
-    def __init__(self, embedding_model: str = EMBEDDING_MODEL_NAME):
+    def __init__(self, collection_name: str = "documents", embedding_model: str = EMBEDDING_MODEL_NAME):
         persist_directory = CHROMA_PERSIST_DIR
         
         # Ensure directory exists
@@ -26,7 +26,7 @@ class ChromaVectorStore:
         
         # Get or create collection
         self.collection = self.client.get_or_create_collection(
-            name="documents", # collection name
+            name=collection_name,
             metadata={"hnsw:space": "cosine"})
         
         # Initialize embeddings for querying
@@ -34,6 +34,7 @@ class ChromaVectorStore:
             openai_api_key=OPENAI_API_KEY,
             model=embedding_model)
     
+    @staticmethod
     def _generate_chunk_id(source_path: str, chunk_idx: str, content_hash: str) -> str:
         """
         Generate a unique chunk ID for the chunk.

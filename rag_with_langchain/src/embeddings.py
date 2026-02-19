@@ -19,6 +19,7 @@ class DenseEmbeddings:
         )
         self.batch_size = batch_size if batch_size is not None else EMBEDDING_BATCH_SIZE
     
+    @staticmethod
     def _calculate_content_hash(chunk: Document) -> str:
         """
         Calculate SHA256 hash of chunk content and metadata.

@@ -15,10 +15,6 @@ class DocumentSplitter:
         chunk_overlap: int = 200,
         separators: Optional[List[str]] = None
     ):
-        self.chunk_size = chunk_size
-        self.chunk_overlap = chunk_overlap
-        self.separators = separators
-        
         # We will use LangChain's RecursiveCharacterTextSplitter
         self.splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
@@ -39,8 +35,6 @@ class DocumentSplitter:
             
             # Add chunk positioning metadata
             chunk.metadata['chunk_index'] = i
-            chunk.metadata['start_offset'] = 0  # Could calculate actual offset if needed
-            chunk.metadata['end_offset'] = len(chunk.page_content)
             
             # source_path should have been set by the loader
             assert 'source_path' in chunk.metadata, "source_path should have been set by the loader"

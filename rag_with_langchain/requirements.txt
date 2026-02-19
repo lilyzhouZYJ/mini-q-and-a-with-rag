@@ -4,7 +4,14 @@ python-dotenv
 numpy
 tiktoken
 
-langchain-text-splitters
-langchain-community
-langgraph
-langchain[openai]
+# LangChain dependencies - ensure compatible versions
+# The RemoveMessage error indicates version mismatch - upgrade all together
+langchain>=0.2.0
+langchain-core>=0.2.0
+langchain-community>=0.2.0
+langchain-text-splitters>=0.2.0
+langchain-openai>=0.1.0
+langgraph>=0.2.0
+
+# New dependencies for advanced RAG pipeline
+chromadb>=0.4.0

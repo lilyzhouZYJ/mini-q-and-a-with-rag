@@ -20,5 +20,4 @@ CHROMA_PERSIST_DIR = os.getenv("CHROMA_PERSIST_DIR", str(Path(__file__).parent.p
 SQLITE_DB_PATH = os.getenv("SQLITE_DB_PATH", str(Path(__file__).parent.parent / "ingestion_history.db"))
 
 # Processing configuration
-BATCH_SIZE = int(os.getenv("BATCH_SIZE", "100"))
 EMBEDDING_BATCH_SIZE = int(os.getenv("EMBEDDING_BATCH_SIZE", "100"))
