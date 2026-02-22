@@ -1,5 +1,5 @@
 """
-Chunk documents.
+Step 2: Chunk documents loaded by the loader.
 
 Each chunk includes metadata like source_path, title, doc summary, etc.
 """
@@ -8,15 +8,15 @@ from typing import List, Optional
 from langchain.schema import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-class DocumentSplitter:
+class Chunker:
     def __init__(
         self,
         chunk_size: int = 1000,
         chunk_overlap: int = 200,
         separators: Optional[List[str]] = None
     ):
-        # We will use LangChain's RecursiveCharacterTextSplitter
-        self.splitter = RecursiveCharacterTextSplitter(
+        # Use LangChain's RecursiveCharacterTextSplitter
+        self.chunker = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
             separators=separators
@@ -26,14 +26,14 @@ class DocumentSplitter:
         """
         Split documents into chunks with metadata.
         """
-        chunks = self.splitter.split_documents(docs)
+        chunks = self.chunker.split_documents(docs)
         
-        # Add chunk-related metadata
+        # Add metadata to each chunk
         for i, chunk in enumerate(chunks):
             if not chunk.metadata:
                 chunk.metadata = {}
             
-            # Add chunk positioning metadata
+            # Add index of the chunk
             chunk.metadata['chunk_index'] = i
             
             # source_path should have been set by the loader

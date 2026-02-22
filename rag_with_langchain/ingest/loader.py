@@ -1,12 +1,11 @@
 """
-Load content from various sources.
+Step 1: Load content from various sources.
 
 Supported formats:
 - URLs (web pages)
-- Text files
+- Text files (.txt, .md, .text)
 """
 
-import bs4
 import hashlib
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -15,7 +14,7 @@ from urllib.parse import urlparse
 from langchain.schema import Document
 from langchain_community.document_loaders import WebBaseLoader
 
-from ingest_db import check_file_hash
+from ingest_db import check_if_file_hash_exists
 
 class Loader(ABC):
     def __init__(self, source: str):
@@ -46,12 +45,12 @@ class Loader(ABC):
         """
         return hashlib.sha256(content).hexdigest()
     
-    def _check_early_exit(self, source_hash: str) -> bool:
+    def _check_if_source_exists(self, source_hash: str) -> bool:
         """
         Check if the source can be skipped (already processed).
         Return true if yes.
         """
-        existing = check_file_hash(source_hash)
+        existing = check_if_file_hash_exists(source_hash)
         return existing is not None and existing.get('status') == 'success'
     
     @abstractmethod
@@ -69,22 +68,22 @@ class Loader(ABC):
 
 class WebPageLoader(Loader):
     def load(self) -> Tuple[List[Document], str, bool]:
+        print(f"[Loader][WebPageLoader] Loading web page from {self.source}")
+        
+        # Use WebBaseLoader from LangChain
+        # TODO: filter noise (nav, ads, etc.) in the transform step
         loader = WebBaseLoader(
             web_paths=(self.source,),
-            bs_kwargs=dict(
-                parse_only=bs4.SoupStrainer(
-                    class_=("post-content", "post-title", "post-header")
-                )
-            ),
         )
         docs = loader.load()
         
-        # Combine the fetched content and calculate the hash
+        # Generate content hash
         content = "\n\n".join(doc.page_content for doc in docs).encode('utf-8')
         content_hash = self._calculate_content_hash(content)
         
-        # Check if the source can be skipped (already processed)
-        if self._check_early_exit(content_hash):
+        # Check if the source has already been loaded
+        if self._check_if_source_exists(content_hash):
+            print(f"[Loader][WebPageLoader] Source {self.source} has already been loaded; skip")
             return [], content_hash, True
         
         # Include metadata for each document
@@ -96,17 +95,22 @@ class WebPageLoader(Loader):
             if 'title' not in doc.metadata:
                 doc.metadata['title'] = urlparse(self.source).path.split('/')[-1] or self.source
         
+        print(f"[Loader][WebPageLoader] Loaded {len(docs)} documents from {self.source}")
         return docs, content_hash, False
 
 class TextFileLoader(Loader):
     def load(self) -> Tuple[List[Document], str, bool]:
+        print(f"[Loader][TextFileLoader] Loading text file from {self.source}")
+        
+        # Make sure source file exists
         file_path = Path(self.source)
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {self.source}")
         
-        # Calculate file hash before loading content into memory
+        # Check if the source has already been loaded
         file_hash = self._calculate_file_hash(str(file_path))
-        if self._check_early_exit(file_hash):
+        if self._check_if_source_exists(file_hash):
+            print(f"[Loader][TextFileLoader] Source {self.source} has already been loaded; skip")
             return [], file_hash, True
         
         # Read text file into memory
@@ -121,7 +125,8 @@ class TextFileLoader(Loader):
                 'title': file_path.stem
             }
         )
-        
+
+        print(f"[Loader][TextFileLoader] Loaded document from {self.source}")
         return [doc], file_hash, False
 
 class LoaderFactory:
@@ -143,6 +148,8 @@ class LoaderFactory:
         """
         Create the appropriate loader for the given source.
         """
+        print(f"[Loader][LoaderFactory] Creating loader for source {source}")
+        
         if cls._is_url(source):
             return WebPageLoader(source)
         else:

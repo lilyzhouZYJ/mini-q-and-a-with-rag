@@ -6,8 +6,8 @@ Stages: loader => splitter => transform => embeddings => storage
 from typing import List
 
 from loader import LoaderFactory
-from splitter import DocumentSplitter
-from transform import transform_chunks
+from chunker import DocumentSplitter
+from postprocessor import transform_chunks
 from embeddings import DenseEmbeddings
 from vector_store import ChromaVectorStore
 from ingest_db import record_ingestion

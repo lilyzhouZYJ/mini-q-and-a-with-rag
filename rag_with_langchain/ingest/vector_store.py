@@ -10,13 +10,12 @@ from chromadb.config import Settings
 from langchain.schema import Document
 from langchain_openai import OpenAIEmbeddings
 
-from config import CHROMA_PERSIST_DIR, OPENAI_API_KEY, EMBEDDING_MODEL_NAME
+from config import CHROMA_PERSIST_DIR, OPENAI_API_KEY, EMBEDDING_MODEL_NAME, CHROMA_COLLECTION_NAME
 
 class ChromaVectorStore:
-    def __init__(self, collection_name: str = "documents", embedding_model: str = EMBEDDING_MODEL_NAME):
+    def __init__(self):
+        # Get or create chroma directory
         persist_directory = CHROMA_PERSIST_DIR
-        
-        # Ensure directory exists
         Path(persist_directory).mkdir(parents=True, exist_ok=True)
         
         # Initialize Chroma client
@@ -26,27 +25,27 @@ class ChromaVectorStore:
         
         # Get or create collection
         self.collection = self.client.get_or_create_collection(
-            name=collection_name,
+            name=CHROMA_COLLECTION_NAME,
             metadata={"hnsw:space": "cosine"})
         
         # Initialize embeddings for querying
         self.embeddings = OpenAIEmbeddings(
             openai_api_key=OPENAI_API_KEY,
-            model=embedding_model)
+            model=EMBEDDING_MODEL_NAME)
     
     @staticmethod
-    def _generate_chunk_id(source_path: str, chunk_idx: str, content_hash: str) -> str:
+    def _generate_chunk_id(source_path: str, chunk_idx: str, chunk_hash: str) -> str:
         """
         Generate a unique chunk ID for the chunk.
         """
-        combined = f"{source_path}|{chunk_idx}|{content_hash}"
+        combined = f"{source_path}|{chunk_idx}|{chunk_hash}"
         return hashlib.sha256(combined.encode('utf-8')).hexdigest()
 
     def upsert_chunks(
         self,
         chunks: List[Document],
         dense_embeddings: List[List[float]],
-        content_hashes: List[str]
+        chunk_hashes: List[str]
     ) -> None:
         ids = []
         embeddings = []
@@ -57,21 +56,21 @@ class ChromaVectorStore:
             # Generate unique chunk ID
             source_path = chunk.metadata.get('source_path', 'unknown')
             chunk_index = chunk.metadata.get('chunk_index', i)
-            chunk_id = self._generate_chunk_id(source_path, str(chunk_index), content_hashes[i])
+            chunk_id = self._generate_chunk_id(source_path, str(chunk_index), chunk_hashes[i])
             
             ids.append(chunk_id)
             documents.append(chunk.page_content)
             
-            # Dense embedding
+            # We should have already generated the dense embeddings in the embeddings step,
+            # but in case that failed, we allow generating them on the fly
             if dense_embeddings[i] is not None:
                 embeddings.append(dense_embeddings[i])
             else:
-                # Generate on-the-fly if missing
                 embeddings.append(self.embeddings.embed_query(chunk.page_content))
             
             # Metadata
             metadata = chunk.metadata.copy()
-            metadata['content_hash'] = content_hashes[i]
+            metadata['chunk_hash'] = chunk_hashes[i]
             metadatas.append(metadata)
         
         # Batch upsert
@@ -104,9 +103,9 @@ class ChromaVectorStore:
                 docs.append(doc)
         return docs
     
-    def get_existing_content_hashes(self, limit: int = 10000) -> set:
+    def get_existing_chunk_hashes(self, limit: int = 10000) -> set:
         """
-        Get set of existing content hashes in the vector store.
+        Get set of existing chunk hashes in the vector store.
         This is used to avoid generating embeddings for chunks that already exist.
         """
         # Get all documents (with limit for large collections)
@@ -115,7 +114,7 @@ class ChromaVectorStore:
         hashes = set()
         if results['metadatas']:
             for metadata in results['metadatas']:
-                if 'content_hash' in metadata:
-                    hashes.add(metadata['content_hash'])
+                if 'chunk_hash' in metadata:
+                    hashes.add(metadata['chunk_hash'])
         
         return hashes

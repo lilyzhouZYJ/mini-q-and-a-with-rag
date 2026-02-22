@@ -1,0 +1,14 @@
+You are a text refinement assistant. Your task is to clean and refine the following text chunk to make it self-contained and semantically coherent.
+
+Text chunk:
+{chunk_text}
+
+Instructions:
+1. Remove any page headers, footers, or navigation elements
+2. Merge related fragments that were incorrectly split
+3. Ensure the chunk is self-contained and makes sense on its own
+4. Preserve all important information
+5. Do not add information that wasn't in the original
+
+Return only the refined text, without any additional commentary.
+

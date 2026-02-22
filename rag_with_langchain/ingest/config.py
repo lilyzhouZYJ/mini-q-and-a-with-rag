@@ -17,6 +17,7 @@ EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL_NAME", "text-embedding-3-small
 
 # Storage configuration
 CHROMA_PERSIST_DIR = os.getenv("CHROMA_PERSIST_DIR", str(Path(__file__).parent.parent / "chroma_db"))
+CHROMA_COLLECTION_NAME = os.getenv("CHROMA_COLLECTION_NAME", "documents")
 SQLITE_DB_PATH = os.getenv("SQLITE_DB_PATH", str(Path(__file__).parent.parent / "ingestion_history.db"))
 
 # Processing configuration

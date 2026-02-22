@@ -50,7 +50,7 @@ def _init_db(conn: sqlite3.Connection) -> None:
     """)
     conn.commit()
 
-def check_file_hash(file_hash: str) -> Optional[dict]:
+def check_if_file_hash_exists(file_hash: str) -> Optional[dict]:
     """
     Check if the file hash exists in the ingestion history.
     Return the ingestion record if found, None otherwise.

@@ -1,5 +1,5 @@
 """
-Generate dense (semantic) embeddings for chunks.
+Step 4: Generate dense (semantic) embeddings for chunks.
 Supports incremental processing based on content hashes.
 """
 
@@ -12,15 +12,15 @@ from langchain_openai import OpenAIEmbeddings
 from config import OPENAI_API_KEY, EMBEDDING_MODEL_NAME, EMBEDDING_BATCH_SIZE
 
 class DenseEmbeddings:
-    def __init__(self, embedding_model: str = EMBEDDING_MODEL_NAME, batch_size: int = None):
+    def __init__(self):
         self.embeddings = OpenAIEmbeddings(
             openai_api_key=OPENAI_API_KEY,
-            model=embedding_model
+            model=EMBEDDING_MODEL_NAME
         )
-        self.batch_size = batch_size if batch_size is not None else EMBEDDING_BATCH_SIZE
+        self.batch_size = EMBEDDING_BATCH_SIZE
     
     @staticmethod
-    def _calculate_content_hash(chunk: Document) -> str:
+    def _calculate_chunk_hash(chunk: Document) -> str:
         """
         Calculate SHA256 hash of chunk content and metadata.
         We will use the hash for incremental processing.
@@ -45,20 +45,22 @@ class DenseEmbeddings:
         """
         Generate dense embeddings for the given chunks.
         - existing_hashes: set of content hashes that already exist in the vector store
-        - returns: tuple of (dense_embeddings, content_hashes)
+        - returns: tuple of (dense_embeddings, chunk_hashes)
         """
+        print(f"[DenseEmbeddings] Generating embeddings for {len(chunks)} chunks")
         if existing_hashes is None:
             existing_hashes = set()
         
         # Filter chunks that need embedding and track indices
-        content_hashes = []
+        chunk_hashes = []
         chunks_to_embed = []
         
         for i, chunk in enumerate(chunks):
-            content_hash = self._calculate_content_hash(chunk)
-            content_hashes.append(content_hash)
-            if content_hash not in existing_hashes:
+            chunk_hash = self._calculate_chunk_hash(chunk)
+            chunk_hashes.append(chunk_hash)
+            if chunk_hash not in existing_hashes:
                 chunks_to_embed.append((chunk, i))
+        print(f"[DenseEmbeddings] {len(chunks_to_embed)} chunks need embedding")
         
         # Generate dense embeddings
         dense_embeddings = [None] * len(chunks)
@@ -77,4 +79,4 @@ class DenseEmbeddings:
             for idx, (_, orig_idx) in enumerate(chunks_to_embed):
                 dense_embeddings[orig_idx] = all_dense_vecs[idx]
         
-        return dense_embeddings, content_hashes
+        return dense_embeddings, chunk_hashes
