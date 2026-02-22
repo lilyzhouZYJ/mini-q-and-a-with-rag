@@ -47,6 +47,7 @@ class ChromaVectorStore:
         dense_embeddings: List[List[float]],
         chunk_hashes: List[str]
     ) -> None:
+        print(f"[VectorStore] Upserting {len(chunks)} chunks into Chroma")
         ids = []
         embeddings = []
         documents = []

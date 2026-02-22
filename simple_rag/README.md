@@ -1,14 +1,14 @@
 # Mini Q&A using RAG
 
-The `rag/` directory contains a lightweight Q&A application using RAG. The application supports retrieving text content from a provided file. This implementation does *not* use LangChain.
+The `simple_rag/` directory contains a lightweight Q&A application using RAG. The application supports retrieving text content from a provided file. This implementation does *not* use LangChain.
 
 ## Getting started
 
 To run the app, execute:
 
 ```bash
-pip install -r rag/requirements.txt
-python3 rag/q_and_a_app.py --path some_file.txt
+pip install -r simple_rag/requirements.txt
+python3 simple_rag/q_and_a_app.py --path some_file.txt
 ```
 
 You will be prompted to input questions, and the app will generate answers.
@@ -25,7 +25,7 @@ We need to be able to convert text into embeddings (semantic vectors). This is i
 To test our implementation, we can run
 
 ```
-python3 rag/test_embeddings.py
+python3 simple_rag/test_embeddings.py
 ```
 
 Output:
@@ -63,7 +63,7 @@ The chunker's key functionalities are:
 To test our implementation, we can run
 
 ```
-python3 rag/test_chunker.py
+python3 simple_rag/test_chunker.py
 ```
 
 This will split `test.txt`, which contains the first 10 chapters of Pride and Prejudice, into smaller chunks.
@@ -120,7 +120,7 @@ We then need to convert the chunks into embeddings and store them in a vector st
 To test our vector store implementation, run
 
 ```
-python3 rag/test_vector_store.py
+python3 simple_rag/test_vector_store.py
 ```
 
 This may take a minute to run, but the output is as follows:
@@ -156,7 +156,7 @@ The main logic of the Q&A app is in `q_and_a_app.py`. There is also a test file 
 You can run the app using:
 
 ```
-python3 rag/q_and_a_app.py --path rag/test.txt
+python3 simple_rag/q_and_a_app.py --path simple_rag/test.txt
 ```
 
 The output, including 2 sample questions, is below. The app was able to answer questions about the text in its own words!

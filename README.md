@@ -2,8 +2,8 @@
 
 This repo includes two implementations of a tiny Q&A application using RAG.
 
-1. **Raw RAG implementation** (`rag/`) - a lightweight implementation built from scratch
-2. **RAG using LangChain** (`rag_with_langchain/`) - a more production-ready approach using LangChain
+1. **Raw RAG implementation** (`simple_rag/`) - a lightweight implementation built from scratch
+2. **RAG using LangChain** (`rag_app/`) - a more production-ready approach using LangChain
 
 Both implementations include:
 - loading and chunking text content
@@ -14,15 +14,15 @@ Both implementations include:
 Currently, the raw RAG implementation supports retrieving text files, while the LangChain implementation supports retrieving webpages.
 
 For more details on each implementation, see below documentations:
-- Raw RAG: [`rag/README.md`](rag/README.md)
-- RAG with LangChain: [`rag_with_langchain/README.md`](rag_with_langchain/README.md)
+- Raw RAG: [`simple_rag/README.md`](simple_rag/README.md)
+- RAG with LangChain: [`rag_app/README.md`](rag_app/README.md)
 
 ## Quick Start
 
 ### (1) Raw RAG Implementation
 
 ```bash
-cd rag
+cd simple_rag
 pip install -r requirements.txt
 
 # Set up environment variables
@@ -35,7 +35,7 @@ python3 q_and_a_app.py --path test.txt
 ### (2) LangChain Implementation
 
 ```bash
-cd rag_with_langchain
+cd rag_app
 pip install -r requirements.txt
 
 # Set up environment variables

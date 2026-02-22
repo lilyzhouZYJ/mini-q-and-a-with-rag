@@ -1,13 +1,13 @@
 # Mini Q&A using LangChain
 
-The `rag_with_langchain` directory contains a LangChain-based implementation of a Q&A application. The application supports loading web content and answering questions about it using RAG.
+The `rag_app` directory contains a LangChain-based implementation of a Q&A application. The application supports loading web content and answering questions about it using RAG.
 
 ## Getting started
 
 ### Requirements
 
 ```bash
-cd rag_with_langchain
+cd rag_app
 pip install -r requirements.txt
 ```
 
