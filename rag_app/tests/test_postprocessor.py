@@ -134,8 +134,7 @@ class TestPostProcessor(unittest.TestCase):
         mock_response = Mock()
         mock_response.content = json.dumps({
             "title": "Test Title",
-            "summary": "Test summary",
-            "tags": ["tag1", "tag2"]
+            "summary": "Test summary"
         })
         mock_llm.invoke.return_value = mock_response
         mock_init_model.return_value = mock_llm
@@ -146,7 +145,6 @@ class TestPostProcessor(unittest.TestCase):
         # Should return valid metadata
         self.assertEqual(metadata['title'], "Test Title")
         self.assertEqual(metadata['summary'], "Test summary")
-        self.assertEqual(metadata['tags'], ["tag1", "tag2"])
     
     @patch('postprocessor.init_chat_model')
     def test_extract_metadata_with_code_blocks(self, mock_init_model):
@@ -156,8 +154,7 @@ class TestPostProcessor(unittest.TestCase):
         mock_response = Mock()
         mock_response.content = "```json\n" + json.dumps({
             "title": "Test Title",
-            "summary": "Test summary",
-            "tags": ["tag1"]
+            "summary": "Test summary"
         }) + "\n```"
         mock_llm.invoke.return_value = mock_response
         mock_init_model.return_value = mock_llm
@@ -183,7 +180,6 @@ class TestPostProcessor(unittest.TestCase):
         # Should return default metadata
         self.assertEqual(metadata['title'], 'Test Chunk')  # From chunk metadata
         self.assertIn('summary', metadata)
-        self.assertIn('tags', metadata)
     
     @patch('postprocessor.init_chat_model')
     def test_postprocess_chunks_refinement_only(self, mock_init_model):
@@ -216,8 +212,7 @@ class TestPostProcessor(unittest.TestCase):
         mock_response = Mock()
         mock_response.content = json.dumps({
             "title": "Extracted Title",
-            "summary": "Extracted summary",
-            "tags": ["tag1"]
+            "summary": "Extracted summary"
         })
         mock_llm.invoke.return_value = mock_response
         mock_init_model.return_value = mock_llm
@@ -246,8 +241,7 @@ class TestPostProcessor(unittest.TestCase):
         mock_response2 = Mock()
         mock_response2.content = json.dumps({
             "title": "Extracted Title",
-            "summary": "Extracted summary",
-            "tags": ["tag1"]
+            "summary": "Extracted summary"
         })
         mock_llm.invoke.side_effect = [mock_response1, mock_response2]
         mock_init_model.return_value = mock_llm

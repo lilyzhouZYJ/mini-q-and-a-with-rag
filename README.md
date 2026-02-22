@@ -1,9 +1,9 @@
 # Mini Q&A with RAG
 
-This repo includes two implementations of a tiny Q&A application using RAG.
+This repo includes two implementations of a small Q&A application using RAG.
 
-1. **Raw RAG implementation** (`simple_rag/`) - a lightweight implementation built from scratch
-2. **RAG using LangChain** (`rag_app/`) - a more production-ready approach using LangChain
+1. **`simple_rag`** - a lightweight implementation built from scratch
+2. **`rag_app`** - a more complex implementation, includes features such as chunk post-processing, sparse encoding, etc.
 
 Both implementations include:
 - loading and chunking text content
@@ -19,7 +19,7 @@ For more details on each implementation, see below documentations:
 
 ## Quick Start
 
-### (1) Raw RAG Implementation
+### (1) `simple_rag`
 
 ```bash
 cd simple_rag
@@ -32,7 +32,7 @@ pip install -r requirements.txt
 python3 q_and_a_app.py --path test.txt
 ```
 
-### (2) LangChain Implementation
+### (2) `rag_app`
 
 ```bash
 cd rag_app
@@ -41,9 +41,11 @@ pip install -r requirements.txt
 # Set up environment variables
 # Create a .env file with OPENAI_API_KEY=your_key_here
 
-# Run with a single text file
-python main.py --file "document.txt"
+# Step 1: Ingest documents into the vector store
+python ingest_documents.py --file "document.txt"
+# Or ingest all files from a directory
+python ingest_documents.py --files-dir "./documents"
 
-# Or process all text files from a directory (recursively scans subdirectories)
-python main.py --files-dir "./documents"
+# Step 2: Ask questions about the ingested documents
+python run_q_and_a.py
 ```

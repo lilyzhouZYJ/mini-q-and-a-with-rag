@@ -9,7 +9,7 @@ We implement the following steps:
 - make each chunk self-contained, i.e. understandable in isolation
 
 (2) Metadata extraction:
-- extract information from each chunk, like title, summary, tags
+- extract information from each chunk, like title and summary
 """
 
 import time
@@ -113,7 +113,7 @@ class PostProcessor:
             chunk: Document chunk to extract metadata from
             
         Returns:
-            Dictionary with title, summary, and tags
+            Dictionary with title and summary
         """
         print(f"[PostProcessor] Extracting metadata from chunk with index {chunk.metadata.get('chunk_index', 'unknown')}")
         prompt = self._extract_metadata_prompt(chunk.page_content)
@@ -132,7 +132,7 @@ class PostProcessor:
                 metadata = json.loads(content)
                 
                 # Validate structure
-                if not all(k in metadata for k in ['title', 'summary', 'tags']):
+                if not all(k in metadata for k in ['title', 'summary']):
                     raise ValueError("Missing required metadata fields")
                 
                 return metadata
@@ -147,15 +147,13 @@ class PostProcessor:
                     # Return default metadata on failure
                     return {
                         'title': chunk.metadata.get('title', 'Untitled'),
-                        'summary': chunk.page_content[:100] + '...',
-                        'tags': []
+                        'summary': chunk.page_content[:100] + '...'
                     }
         
         # Shouldn't get here
         return {
             'title': chunk.metadata.get('title', 'Untitled'),
-            'summary': chunk.page_content[:100] + '...',
-            'tags': []
+            'summary': chunk.page_content[:100] + '...'
         }
     
     def postprocess_chunks(

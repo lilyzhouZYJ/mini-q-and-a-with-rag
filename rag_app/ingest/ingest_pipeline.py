@@ -78,7 +78,7 @@ class IngestPipeline:
         print(f"[IngestPipeline] Generating embeddings...")
         
         # Get existing content hashes to avoid duplicate embeddings
-        existing_hashes = self.vector_store.get_existing_content_hashes()
+        existing_hashes = self.vector_store.get_existing_chunk_hashes()
         
         # Generate embeddings
         dense_embeddings, content_hashes = self.embedding_gen.generate_embeddings(
@@ -114,6 +114,8 @@ class IngestPipeline:
             try:
                 chunks_count = self.process_single_source(source)
                 total_chunks += chunks_count
+                if chunks_count == 0:
+                    print(f"[IngestPipeline] Warning: No chunks created for {source}")
             except Exception as e:
                 print(f"[IngestPipeline] Error processing {source}: {e}")
                 continue

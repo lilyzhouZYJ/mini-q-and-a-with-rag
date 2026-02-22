@@ -6,12 +6,10 @@ Text chunk:
 Extract the following information:
 1. Title: A concise title (3-8 words) that summarizes the main topic
 2. Summary: A brief summary (1-2 sentences) of the chunk's content
-3. Tags: 3-5 relevant tags/keywords that describe the content
 
 Format your response as JSON:
 {{
     "title": "title here",
-    "summary": "summary here",
-    "tags": ["tag1", "tag2", "tag3"]
+    "summary": "summary here"
 }}
 

@@ -69,7 +69,6 @@ class ChromaVectorStore:
             else:
                 embeddings.append(self.embeddings.embed_query(chunk.page_content))
             
-            # Metadata
             metadata = chunk.metadata.copy()
             metadata['chunk_hash'] = chunk_hashes[i]
             metadatas.append(metadata)
@@ -110,7 +109,7 @@ class ChromaVectorStore:
         This is used to avoid generating embeddings for chunks that already exist.
         """
         # Get all documents (with limit for large collections)
-        results = self.collection.get(limit)
+        results = self.collection.get(limit=limit)
         
         hashes = set()
         if results['metadatas']:

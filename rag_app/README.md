@@ -1,6 +1,12 @@
-# Mini Q&A using LangChain
+# Mini Q&A
 
-The `rag_app` directory contains a LangChain-based implementation of a Q&A application. The application supports loading text files (single files or entire directories) and answering questions about them using RAG.
+The `rag_app` directory contains a RAG application that **ingests text files and answers questions about them**. The ingestion pipeline chunks source documents and performs a series of post-processing (such as noise removal, metadata generation) on the chunks before generating dense embeddings. The query process performs similarity search based on the dense embeddings.
+
+For more detailed documentation, see [./docs](./docs/).
+
+*todo:*
+- add sparse embeddings
+- improve query
 
 ## Getting started
 
@@ -33,46 +39,68 @@ You can also run `cp .env.example .env` and fill it the config fields.
 
 ## Usage
 
-### Basic Usage
+The application is split into two separate scripts:
+
+1. **`ingest_documents.py`** - Ingests documents into the vector store
+2. **`run_q_and_a.py`** - Runs the interactive Q&A interface
+
+### Step 1: Ingest Documents
+
+First, ingest your documents into the vector store:
 
 ```bash
-# Single text file with interactive mode
-python main.py --file "document.txt"
+# Ingest a single text file
+python ingest_documents.py --file "document.txt"
 
-# Multiple files from directory
-python main.py --files-dir "./documents"
+# Ingest all files from a directory
+python ingest_documents.py --files-dir "./documents"
 
-# Single question mode
-python main.py --file "document.txt" --question "What is this about?"
+# Ingest without LLM-based transformation
+python ingest_documents.py --file "document.txt" --no-transform
 ```
 
-### Command Line Options
-
-- `--file PATH`: Load content from a single text file (.txt, .md)
-- `--files-dir PATH`: Load all supported files from a directory (recursively scans subdirectories)
-- `--interactive`: Run in interactive mode (default)
-- `--question TEXT`: Ask a single question and exit
+**Ingestion Options:**
+- `--file PATH`: Ingest a single text file (.txt, .md)
+- `--files-dir PATH`: Ingest all supported files from a directory (recursively scans subdirectories)
 - `--no-transform`: Disable LLM-based transformation and enrichment
-- `--help`: Show help message
 
 **Note**: When using `--files-dir`, the app will recursively scan the directory and all subdirectories for supported text files (.txt, .md).
 
+### Step 2: Ask Questions
+
+After ingesting documents, run the Q&A interface:
+
+```bash
+python run_q_and_a.py
+```
+
+The script runs in interactive mode - you can ask multiple questions. Type 'quit' or 'exit' to end the session.
+
 ## Examples
 
-### Interactive Mode with Single File
+### Complete Workflow
+
 ```bash
-python main.py --file "document.txt"
+# 1. Ingest documents
+python ingest_documents.py --files-dir "./documents"
+
+# 2. Ask questions interactively
+python run_q_and_a.py
 ```
 
-### Batch Processing from Directory
+### Ingesting Multiple Documents
+
 ```bash
-# Process all .txt and .md files in the directory and subdirectories
-python main.py --files-dir "./documents"
+# Ingest all .txt and .md files in the directory and subdirectories
+python ingest_documents.py --files-dir "./documents"
 ```
 
-### Single Question Mode
+### Interactive Q&A Session
+
 ```bash
-python main.py --file "document.txt" --question "What are the main points?"
+python run_q_and_a.py
+# Then type your questions at the prompt
+# Type 'quit' or 'exit' to end the session
 ```
 
 ## LangSmith Tracing
