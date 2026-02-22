@@ -1,6 +1,6 @@
 # Mini Q&A using LangChain
 
-The `rag_app` directory contains a LangChain-based implementation of a Q&A application. The application supports loading web content and answering questions about it using RAG.
+The `rag_app` directory contains a LangChain-based implementation of a Q&A application. The application supports loading text files (single files or entire directories) and answering questions about them using RAG.
 
 ## Getting started
 
@@ -36,51 +36,43 @@ You can also run `cp .env.example .env` and fill it the config fields.
 ### Basic Usage
 
 ```bash
-# Single URL with interactive mode
-python main.py --url "https://example.com/article"
+# Single text file with interactive mode
+python main.py --file "document.txt"
 
-# Multiple URLs from file
-python main.py --urls-file "urls.txt"
+# Multiple files from directory
+python main.py --files-dir "./documents"
 
 # Single question mode
-python main.py --url "https://example.com/article" --question "What is this article about?"
+python main.py --file "document.txt" --question "What is this about?"
 ```
 
 ### Command Line Options
 
-- `--url URL`: Load content from a single URL
-- `--urls-file PATH`: Load URLs from a text file (one URL per line)
+- `--file PATH`: Load content from a single text file (.txt, .md)
+- `--files-dir PATH`: Load all supported files from a directory (recursively scans subdirectories)
 - `--interactive`: Run in interactive mode (default)
 - `--question TEXT`: Ask a single question and exit
+- `--no-transform`: Disable LLM-based transformation and enrichment
 - `--help`: Show help message
 
-### URL File Format
-
-Create a text file with one URL per line. Lines starting with `#` are treated as comments:
-
-```
-# Sample URLs for testing
-https://example.com/article1
-https://example.com/article2
-# This is a comment
-https://example.com/article3
-```
+**Note**: When using `--files-dir`, the app will recursively scan the directory and all subdirectories for supported text files (.txt, .md).
 
 ## Examples
 
-### Interactive Mode with Single URL
+### Interactive Mode with Single File
 ```bash
-python main.py --url "https://lilianweng.github.io/posts/2023-06-23-agent/"
+python main.py --file "document.txt"
 ```
 
-### Batch Processing from File
+### Batch Processing from Directory
 ```bash
-python main.py --urls-file "sample_urls.txt"
+# Process all .txt and .md files in the directory and subdirectories
+python main.py --files-dir "./documents"
 ```
 
 ### Single Question Mode
 ```bash
-python main.py --url "https://example.com/article" --question "What are the main points?"
+python main.py --file "document.txt" --question "What are the main points?"
 ```
 
 ## LangSmith Tracing
@@ -100,8 +92,8 @@ This is especially useful for:
 
 ## How It Works
 
-1. **Content Loading**: The app loads web content using LangChain's WebBaseLoader
+1. **Content Loading**: The app loads text files (.txt, .md) from the filesystem
 2. **Chunking**: Content is split into manageable chunks using RecursiveCharacterTextSplitter
-3. **Vector Store**: Chunks are embedded and stored in an in-memory vector store
+3. **Vector Store**: Chunks are embedded and stored in a persistent Chroma vector store
 4. **RAG Pipeline**: Uses LangGraph to implement a retrieval-augmented generation pipeline
 5. **Question Answering**: Retrieves relevant chunks and generates answers using the configured LLM

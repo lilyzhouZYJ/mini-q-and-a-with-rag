@@ -6,14 +6,14 @@ import unittest
 import tempfile
 import os
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from langchain.schema import Document
 
 # Add parent directory to path to import modules
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent / "ingest"))
 
-from loader import Loader, WebPageLoader, TextFileLoader, LoaderFactory
+from loader import Loader, TextFileLoader, LoaderFactory
 
 
 class TestLoader(unittest.TestCase):
@@ -35,17 +35,6 @@ class TestLoader(unittest.TestCase):
         finally:
             os.unlink(temp_path)
     
-    def test_calculate_content_hash(self):
-        """Test content hash calculation."""
-        content = b"test content"
-        hash1 = Loader._calculate_content_hash(content)
-        hash2 = Loader._calculate_content_hash(content)
-        # Same content should produce same hash
-        self.assertEqual(hash1, hash2)
-        # Hash should be a hex string
-        self.assertEqual(len(hash1), 64)
-
-
 class TestTextFileLoader(unittest.TestCase):
     """Test cases for TextFileLoader."""
     
@@ -105,84 +94,19 @@ class TestTextFileLoader(unittest.TestCase):
             loader.load()
 
 
-class TestWebPageLoader(unittest.TestCase):
-    """Test cases for WebPageLoader."""
-    
-    @patch('loader.WebBaseLoader')
-    @patch('loader.check_if_file_hash_exists')
-    def test_load_webpage(self, mock_check_hash, mock_web_loader_class):
-        """Test loading a webpage."""
-        # Mock WebBaseLoader
-        mock_loader = MagicMock()
-        mock_doc = Document(
-            page_content="Test webpage content",
-            metadata={'title': 'Test Page'}
-        )
-        mock_loader.load.return_value = [mock_doc]
-        mock_web_loader_class.return_value = mock_loader
-        
-        mock_check_hash.return_value = None  # Not processed yet
-        
-        loader = WebPageLoader("https://example.com/test")
-        docs, content_hash, should_skip = loader.load()
-        
-        # Should not skip
-        self.assertFalse(should_skip)
-        # Should return documents
-        self.assertGreater(len(docs), 0)
-        # Check metadata
-        self.assertEqual(docs[0].metadata['doc_type'], 'webpage')
-        self.assertEqual(docs[0].metadata['source_path'], "https://example.com/test")
-        # Hash should be calculated
-        self.assertIsNotNone(content_hash)
-    
-    @patch('loader.WebBaseLoader')
-    @patch('loader.check_if_file_hash_exists')
-    def test_load_webpage_already_processed(self, mock_check_hash, mock_web_loader_class):
-        """Test skipping already processed webpage."""
-        # Mock WebBaseLoader
-        mock_loader = MagicMock()
-        mock_doc = Document(page_content="Test content")
-        mock_loader.load.return_value = [mock_doc]
-        mock_web_loader_class.return_value = mock_loader
-        
-        mock_check_hash.return_value = {'status': 'success'}  # Already processed
-        
-        loader = WebPageLoader("https://example.com/test")
-        docs, content_hash, should_skip = loader.load()
-        
-        # Should skip
-        self.assertTrue(should_skip)
-        # Should return empty documents
-        self.assertEqual(len(docs), 0)
-
-
 class TestLoaderFactory(unittest.TestCase):
     """Test cases for LoaderFactory."""
-    
-    def test_is_url(self):
-        """Test URL detection."""
-        self.assertTrue(LoaderFactory._is_url("https://example.com"))
-        self.assertTrue(LoaderFactory._is_url("http://example.com"))
-        self.assertFalse(LoaderFactory._is_url("/path/to/file.txt"))
-        self.assertFalse(LoaderFactory._is_url("file.txt"))
     
     def test_get_file_type(self):
         """Test file type detection."""
         self.assertEqual(LoaderFactory._get_file_type(Path("test.txt")), 'text')
         self.assertEqual(LoaderFactory._get_file_type(Path("test.md")), 'text')
-        self.assertEqual(LoaderFactory._get_file_type(Path("test.text")), 'text')
         
+        # Test unsupported extensions
         with self.assertRaises(ValueError):
             LoaderFactory._get_file_type(Path("test.pdf"))
-    
-    @patch('loader.WebPageLoader')
-    def test_create_loader_for_url(self, mock_web_loader):
-        """Test creating loader for URL."""
-        mock_web_loader.return_value = Mock()
-        loader = LoaderFactory.create_loader("https://example.com")
-        self.assertIsInstance(loader, Mock)
-        mock_web_loader.assert_called_once_with("https://example.com")
+        with self.assertRaises(ValueError):
+            LoaderFactory._get_file_type(Path("test.text"))  # .text not supported
     
     def test_create_loader_for_text_file(self):
         """Test creating loader for text file."""
@@ -196,10 +120,21 @@ class TestLoaderFactory(unittest.TestCase):
         finally:
             os.unlink(temp_path)
     
+    def test_create_loader_for_directory(self):
+        """Test that creating loader for directory raises error."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with self.assertRaises(ValueError) as context:
+                LoaderFactory.create_loader(temp_dir)
+            self.assertIn("Expected a file path, but got a directory", str(context.exception))
+    
     def test_create_loader_for_nonexistent_file(self):
         """Test creating loader for non-existent file."""
         with self.assertRaises(FileNotFoundError):
             LoaderFactory.create_loader("/nonexistent/file.txt")
+    
+    def test_supported_extensions(self):
+        """Test that SUPPORTED_EXTENSIONS contains only .txt and .md."""
+        self.assertEqual(LoaderFactory.SUPPORTED_EXTENSIONS, {'.txt', '.md'})
 
 
 if __name__ == '__main__':

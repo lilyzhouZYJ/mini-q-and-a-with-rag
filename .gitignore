@@ -6,3 +6,4 @@ src/__pycache__/
 rag/vector_store/
 *.db
 chroma_db/
+documents/

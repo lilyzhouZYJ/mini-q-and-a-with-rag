@@ -42,7 +42,7 @@ class IngestPipeline:
         Process a single source through the full pipeline.
         
         Args:
-            source: URL or file path to process
+            source: File path to process
             
         Returns:
             Number of chunks processed
@@ -103,7 +103,7 @@ class IngestPipeline:
         Process multiple sources through the pipeline.
         
         Args:
-            sources: List of URLs or file paths
+            sources: List of file paths
             
         Returns:
             Total number of chunks processed

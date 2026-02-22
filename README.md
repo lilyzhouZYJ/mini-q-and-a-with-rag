@@ -11,7 +11,7 @@ Both implementations include:
 - querying the content using natural language questions
 - producing AI-generated answers based on the retrieved context
 
-Currently, the raw RAG implementation supports retrieving text files, while the LangChain implementation supports retrieving webpages.
+Currently, `simple_rag` supports retrieving single text files, while `rag_app` supports retrieving single files or directories.
 
 For more details on each implementation, see below documentations:
 - Raw RAG: [`simple_rag/README.md`](simple_rag/README.md)
@@ -41,9 +41,9 @@ pip install -r requirements.txt
 # Set up environment variables
 # Create a .env file with OPENAI_API_KEY=your_key_here
 
-# Run with a single URL
-python main.py --url "https://example.com/article"
+# Run with a single text file
+python main.py --file "document.txt"
 
-# Or run with multiple URLs from a file
-python main.py --urls-file sample_urls.txt
+# Or process all text files from a directory (recursively scans subdirectories)
+python main.py --files-dir "./documents"
 ```

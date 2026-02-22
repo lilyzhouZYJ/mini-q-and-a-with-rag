@@ -6,7 +6,7 @@ if a file has already been processed, we skip it.
 
 We store below information in the database:
 - file_hash: SHA256 hash of the file
-- source_path: Path or URL of the source
+- source_path: Path of the source file
 - status: Status of ingestion ('success', 'failed', 'processing')
 - processed_at: Timestamp of the ingestion
 - chunk_count: Number of chunks created
@@ -79,7 +79,7 @@ def record_ingestion(
     
     Args:
         file_hash: SHA256 hash of the file
-        source_path: Path or URL of the source
+        source_path: Path of the source file
         status: Status of ingestion ('success', 'failed', 'processing')
         chunk_count: Number of chunks created (default: 0)
     """

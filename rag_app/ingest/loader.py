@@ -1,18 +1,15 @@
 """
-Step 1: Load content from various sources.
+Step 1: Load content from text files.
 
 Supported formats:
-- URLs (web pages)
-- Text files (.txt, .md, .text)
+- Text files (.txt, .md)
 """
 
 import hashlib
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List, Tuple
-from urllib.parse import urlparse
 from langchain.schema import Document
-from langchain_community.document_loaders import WebBaseLoader
 
 from ingest_db import check_if_file_hash_exists
 
@@ -20,7 +17,7 @@ class Loader(ABC):
     def __init__(self, source: str):
         """
         Initialize the loader.
-        Source is the file path or the URL.
+        Source is the file path.
         """
         self.source = source
     
@@ -35,15 +32,6 @@ class Loader(ABC):
             for chunk in iter(lambda: f.read(4096), b""):
                 sha256.update(chunk)
         return sha256.hexdigest()
-    
-    @staticmethod
-    def _calculate_content_hash(content: bytes) -> str:
-        """
-        Calculate the SHA256 hash of content bytes.
-        This function is used for webpage loading, which requires that
-        we first read the content into memory.
-        """
-        return hashlib.sha256(content).hexdigest()
     
     def _check_if_source_exists(self, source_hash: str) -> bool:
         """
@@ -65,38 +53,6 @@ class Loader(ABC):
             - should_skip: True if early exit (already processed)
         """
         pass
-
-class WebPageLoader(Loader):
-    def load(self) -> Tuple[List[Document], str, bool]:
-        print(f"[Loader][WebPageLoader] Loading web page from {self.source}")
-        
-        # Use WebBaseLoader from LangChain
-        # TODO: filter noise (nav, ads, etc.) in the transform step
-        loader = WebBaseLoader(
-            web_paths=(self.source,),
-        )
-        docs = loader.load()
-        
-        # Generate content hash
-        content = "\n\n".join(doc.page_content for doc in docs).encode('utf-8')
-        content_hash = self._calculate_content_hash(content)
-        
-        # Check if the source has already been loaded
-        if self._check_if_source_exists(content_hash):
-            print(f"[Loader][WebPageLoader] Source {self.source} has already been loaded; skip")
-            return [], content_hash, True
-        
-        # Include metadata for each document
-        for doc in docs:
-            if not doc.metadata:
-                doc.metadata = {}
-            doc.metadata['source_path'] = self.source
-            doc.metadata['doc_type'] = 'webpage'
-            if 'title' not in doc.metadata:
-                doc.metadata['title'] = urlparse(self.source).path.split('/')[-1] or self.source
-        
-        print(f"[Loader][WebPageLoader] Loaded {len(docs)} documents from {self.source}")
-        return docs, content_hash, False
 
 class TextFileLoader(Loader):
     def load(self) -> Tuple[List[Document], str, bool]:
@@ -130,15 +86,13 @@ class TextFileLoader(Loader):
         return [doc], file_hash, False
 
 class LoaderFactory:
-    @staticmethod
-    def _is_url(source: str) -> bool:
-        parsed = urlparse(source)
-        return parsed.scheme in ('http', 'https')
+    # Supported file extensions
+    SUPPORTED_EXTENSIONS = {'.txt', '.md'}
     
     @staticmethod
     def _get_file_type(file_path: Path) -> str:
         suffix = file_path.suffix.lower()
-        if suffix in {'.txt', '.md', '.text'}:
+        if suffix in LoaderFactory.SUPPORTED_EXTENSIONS:
             return 'text'
         else:
             raise ValueError(f"Unsupported file type: {suffix}")
@@ -146,17 +100,17 @@ class LoaderFactory:
     @classmethod
     def create_loader(cls, source: str) -> Loader:
         """
-        Create the appropriate loader for the given source.
+        Create the appropriate loader for the given file path.
         """
         print(f"[Loader][LoaderFactory] Creating loader for source {source}")
         
-        if cls._is_url(source):
-            return WebPageLoader(source)
-        else:
-            file_path = Path(source)
-            if not file_path.exists():
-                raise FileNotFoundError(f"File not found: {source}")
-            
-            file_type = cls._get_file_type(file_path)
-            if file_type == 'text':
-                return TextFileLoader(source)
+        file_path = Path(source)
+        if not file_path.exists():
+            raise FileNotFoundError(f"File not found: {source}")
+        
+        if file_path.is_dir():
+            raise ValueError(f"Expected a file path, but got a directory: {source}")
+        
+        file_type = cls._get_file_type(file_path)
+        if file_type == 'text':
+            return TextFileLoader(source)

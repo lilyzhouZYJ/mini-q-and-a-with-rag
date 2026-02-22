@@ -2,8 +2,8 @@
 """
 Mini Q&A CLI Application
 
-This application allows you to load web content or text files (.txt, .md) and ask questions about them.
-You can provide URLs, file paths, or directories containing files.
+This application allows you to load text files (.txt, .md) and ask questions about them.
+You can provide file paths or directories containing files.
 """
 
 import argparse
@@ -20,30 +20,19 @@ sys.path.insert(0, os.path.join(root_dir, 'ingest'))
 from rag_graph import build_langgraph
 from ingest.ingest_pipeline import IngestPipeline
 from ingest.vector_store import ChromaVectorStore
+from ingest.loader import LoaderFactory
 from config import MODEL_NAME, MODEL_PROVIDER, OPENAI_API_KEY
-
-def _load_urls_from_file(file_path: str) -> list:
-    """
-    Load URLs from a text file (one URL per line).
-    Lines starting with '#' are treated as comments and skipped.
-    """
-    urls = []
-    with open(file_path, 'r', encoding='utf-8') as f:
-        for line in f:
-            line = line.strip()
-            # Skip empty lines and comments
-            if line and not line.startswith('#'):
-                urls.append(line)
-    return urls
 
 
 def _collect_files_from_dir(directory: str) -> list:
-    """Collect all supported files from a directory."""
+    """Collect all supported files from a directory (recursively)."""
     dir_path = Path(directory)
-    if not dir_path.exists() or not dir_path.is_dir():
+    if not dir_path.exists():
         raise ValueError(f"Directory not found: {directory}")
+    if not dir_path.is_dir():
+        raise ValueError(f"Path is not a directory: {directory}")
     
-    supported_extensions = {'.txt', '.md', '.text'}
+    supported_extensions = LoaderFactory.SUPPORTED_EXTENSIONS
     files = []
     
     for file_path in dir_path.rglob('*'):
@@ -54,16 +43,10 @@ def _collect_files_from_dir(directory: str) -> list:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Mini Q&A CLI Application - Load web content or text files (.txt, .md) and ask questions",
+        description="Mini Q&A CLI Application - Load text files (.txt, .md) and ask questions",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Single URL
-  python main.py --url "https://example.com/article"
-  
-  # Multiple URLs from file
-  python main.py --urls-file "urls.txt"
-  
   # Single text file
   python main.py --file "document.txt"
   
@@ -77,16 +60,6 @@ Examples:
     
     # Input options (mutually exclusive)
     input_group = parser.add_mutually_exclusive_group(required=True)
-    input_group.add_argument(
-        '--url', 
-        type=str, 
-        help='Single URL to load and process'
-    )
-    input_group.add_argument(
-        '--urls-file', 
-        type=str, 
-        help='Path to text file containing URLs (one per line)'
-    )
     input_group.add_argument(
         '--file',
         type=str,
@@ -134,14 +107,7 @@ Examples:
         # Determine sources to process
         sources = []
         
-        if args.url:
-            sources = [args.url]
-        elif args.urls_file:
-            sources = _load_urls_from_file(args.urls_file)
-            if not sources:
-                print(f"No valid URLs found in {args.urls_file}")
-                sys.exit(1)
-        elif args.file:
+        if args.file:
             sources = [args.file]
         elif args.files_dir:
             sources = _collect_files_from_dir(args.files_dir)
