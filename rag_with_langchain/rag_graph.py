@@ -3,8 +3,7 @@ from langchain.schema import Document
 from langgraph.graph import StateGraph, START
 from typing import Any, List, TypedDict
 
-# Import our custom storage
-from vector_store import ChromaVectorStore
+from ingest.vector_store import ChromaVectorStore
 
 # ---------------------------
 # Define state for langgraph

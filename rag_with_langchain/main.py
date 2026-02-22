@@ -10,21 +10,32 @@ import argparse
 import sys
 import os
 from pathlib import Path
+from langchain.chat_models import init_chat_model
 
-# Add src directory to path so we can import our modules
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+# Add root directory and ingest directory to path so we can import our modules
+root_dir = os.path.dirname(__file__)
+sys.path.insert(0, root_dir)
+sys.path.insert(0, os.path.join(root_dir, 'ingest'))
 
-# Import config before langchain imports so that it picks up USER_AGENT
+from rag_graph import build_langgraph
+from ingest.ingest_pipeline import IngestPipeline
+from ingest.vector_store import ChromaVectorStore
 from config import MODEL_NAME, MODEL_PROVIDER, OPENAI_API_KEY
 
-from langchain.chat_models import init_chat_model
-from rag_graph import build_langgraph
-from ingest import (
-    process_single_source,
-    process_multiple_sources,
-    build_vector_store,
-    load_urls_from_file
-)
+def _load_urls_from_file(file_path: str) -> list:
+    """
+    Load URLs from a text file (one URL per line).
+    Lines starting with '#' are treated as comments and skipped.
+    """
+    urls = []
+    with open(file_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            # Skip empty lines and comments
+            if line and not line.startswith('#'):
+                urls.append(line)
+    return urls
+
 
 def _collect_files_from_dir(directory: str) -> list:
     """Collect all supported files from a directory."""
@@ -40,7 +51,6 @@ def _collect_files_from_dir(directory: str) -> list:
             files.append(str(file_path))
     
     return files
-
 
 def main():
     parser = argparse.ArgumentParser(
@@ -127,7 +137,7 @@ Examples:
         if args.url:
             sources = [args.url]
         elif args.urls_file:
-            sources = load_urls_from_file(args.urls_file)
+            sources = _load_urls_from_file(args.urls_file)
             if not sources:
                 print(f"No valid URLs found in {args.urls_file}")
                 sys.exit(1)
@@ -142,14 +152,20 @@ Examples:
         print(f"Processing {len(sources)} source(s)...")
         
         # Build vector store (persistent Chroma)
-        vector_store = build_vector_store()
+        vector_store = ChromaVectorStore()
+        
+        # Create ingestion pipeline
+        enable_transform = not args.no_transform
+        pipeline = IngestPipeline(
+            vector_store=vector_store,
+            enable_transform=enable_transform
+        )
         
         # Process sources through pipeline
-        enable_transform = not args.no_transform
         if len(sources) == 1:
-            process_single_source(sources[0], vector_store, enable_transform)
+            pipeline.process_single_source(sources[0])
         else:
-            process_multiple_sources(sources, vector_store, enable_transform)
+            pipeline.process_multiple_sources(sources)
         
         print("\n" + "="*50)
         print("Processing complete!")
