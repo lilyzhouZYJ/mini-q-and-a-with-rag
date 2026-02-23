@@ -19,14 +19,22 @@ from typing import List, Dict, Any, Optional
 from langchain.schema import Document
 from langchain.chat_models import init_chat_model
 
-from config import TRANSFORM_MODEL_NAME, MODEL_PROVIDER
-
 class PostProcessor:
     """
     Post-processor for transforming and enriching document chunks.
     Handles chunk refinement and metadata extraction using LLM.
     """
-    def __init__(self, max_retries: int = 3):
+    def __init__(self, model_name: str, model_provider: str, max_retries: int = 3):
+        """
+        Initialize the post-processor.
+        
+        Args:
+            model_name: Model name for transformation
+            model_provider: Model provider (e.g., 'openai')
+            max_retries: Maximum number of retries for LLM calls
+        """
+        self.model_name = model_name
+        self.model_provider = model_provider
         self.max_retries = max_retries
         self.prompts_dir = Path(__file__).parent / "prompts"
         self._llm: Optional[Any] = None
@@ -35,7 +43,7 @@ class PostProcessor:
     def llm(self):
         """Lazy initialization of LLM using config values."""
         if self._llm is None:
-            self._llm = init_chat_model(TRANSFORM_MODEL_NAME, model_provider=MODEL_PROVIDER)
+            self._llm = init_chat_model(self.model_name, model_provider=self.model_provider)
         return self._llm
     
     def _load_prompt_template(self, prompt_file: str) -> str:

@@ -10,12 +10,18 @@ from chromadb.config import Settings
 from langchain.schema import Document
 from langchain_openai import OpenAIEmbeddings
 
-from config import CHROMA_PERSIST_DIR, OPENAI_API_KEY, EMBEDDING_MODEL_NAME, CHROMA_COLLECTION_NAME
-
 class ChromaVectorStore:
-    def __init__(self):
+    def __init__(self, persist_directory: str, collection_name: str, api_key: str, embedding_model: str):
+        """
+        Initialize the Chroma vector store.
+        
+        Args:
+            persist_directory: Directory to persist the vector store
+            collection_name: Name of the collection
+            api_key: OpenAI API key for embeddings
+            embedding_model: Embedding model name
+        """
         # Get or create chroma directory
-        persist_directory = CHROMA_PERSIST_DIR
         Path(persist_directory).mkdir(parents=True, exist_ok=True)
         
         # Initialize Chroma client
@@ -25,13 +31,13 @@ class ChromaVectorStore:
         
         # Get or create collection
         self.collection = self.client.get_or_create_collection(
-            name=CHROMA_COLLECTION_NAME,
+            name=collection_name,
             metadata={"hnsw:space": "cosine"})
         
         # Initialize embeddings for querying
         self.embeddings = OpenAIEmbeddings(
-            openai_api_key=OPENAI_API_KEY,
-            model=EMBEDDING_MODEL_NAME)
+            openai_api_key=api_key,
+            model=embedding_model)
     
     @staticmethod
     def _generate_chunk_id(source_path: str, chunk_idx: str, chunk_hash: str) -> str:
@@ -80,7 +86,7 @@ class ChromaVectorStore:
             documents=documents,
             metadatas=metadatas)
     
-    def similarity_search(self, query: str, k: int = 3) -> List[Document]:
+    def similarity_search(self, query: str, k: int) -> List[Document]:
         """
         Perform similarity search using dense embeddings.
         Returns top k results.
@@ -103,7 +109,7 @@ class ChromaVectorStore:
                 docs.append(doc)
         return docs
     
-    def get_existing_chunk_hashes(self, limit: int = 10000) -> set:
+    def get_existing_chunk_hashes(self, limit: int) -> set:
         """
         Get set of existing chunk hashes in the vector store.
         This is used to avoid generating embeddings for chunks that already exist.

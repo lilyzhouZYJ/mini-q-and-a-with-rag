@@ -19,6 +19,7 @@ sys.path.insert(0, os.path.join(root_dir, 'ingest'))
 from ingest.ingest_pipeline import IngestPipeline
 from ingest.vector_store import ChromaVectorStore
 from ingest.loader import LoaderFactory
+from config.config_loader import load_config
 
 
 def _collect_files_from_dir(directory: str) -> list:
@@ -92,13 +93,22 @@ Examples:
         
         print(f"Processing {len(sources)} source(s)...")
         
+        # Load configuration
+        config = load_config()
+        
         # Build vector store (persistent Chroma)
-        vector_store = ChromaVectorStore()
+        vector_store = ChromaVectorStore(
+            persist_directory=config.vector_store.persist_directory,
+            collection_name=config.vector_store.collection_name,
+            api_key=config.openai_api_key,
+            embedding_model=config.embedding.model
+        )
         
         # Create ingestion pipeline
-        enable_transform = not args.no_transform
+        enable_transform = None if not args.no_transform else False
         pipeline = IngestPipeline(
             vector_store=vector_store,
+            config=config,
             enable_transform=enable_transform
         )
         

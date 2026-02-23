@@ -23,7 +23,8 @@ prompt = hub.pull("rlm/rag-prompt")
 # ---------------------------
 def retrieve(
     state: State,
-    vector_store: ChromaVectorStore
+    vector_store: ChromaVectorStore,
+    k: int
 ):
     """
     Retrieve relevant documents using similarity search.
@@ -31,8 +32,9 @@ def retrieve(
     Args:
         state: Current state
         vector_store: Vector store instance
+        k: Number of documents to retrieve
     """
-    docs = vector_store.similarity_search(state["question"], k=3)
+    docs = vector_store.similarity_search(state["question"], k=k)
     return {"context": docs}
 
 def generate(state: State, llm: Any):
@@ -45,7 +47,8 @@ def generate(state: State, llm: Any):
 
 def build_langgraph(
     vector_store: ChromaVectorStore,
-    llm: Any
+    llm: Any,
+    config: Any
 ):
     """
     Build LangGraph for RAG pipeline.
@@ -53,10 +56,11 @@ def build_langgraph(
     Args:
         vector_store: Vector store instance
         llm: LLM instance
+        config: Configuration object
     """
-    # Wrap steps to pass vector_store and llm
+    # Wrap steps to pass vector_store, llm, and config
     def retrieve_step(state: State):
-        return retrieve(state, vector_store)
+        return retrieve(state, vector_store, config.retrieval.similarity_search_k)
 
     def generate_step(state: State):
         return generate(state, llm)

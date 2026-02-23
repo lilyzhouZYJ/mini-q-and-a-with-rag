@@ -17,21 +17,28 @@ sys.path.insert(0, os.path.join(root_dir, 'ingest'))
 
 from rag_graph import build_langgraph
 from ingest.vector_store import ChromaVectorStore
-from config import MODEL_NAME, MODEL_PROVIDER, OPENAI_API_KEY
+from config.config_loader import load_config
 
 
 def main():
-    
-    # Check if API key is set
-    if not OPENAI_API_KEY:
-        print("Error: OPENAI_API_KEY not found in environment variables.")
-        print("Please set your OpenAI API key in a .env file or environment variable.")
-        sys.exit(1)
-    
     try:
+        # Load configuration
+        config = load_config()
+        
+        # Check if API key is set
+        if not config.openai_api_key:
+            print("Error: OPENAI_API_KEY not found in environment variables.")
+            print("Please set your OpenAI API key in a .env file or environment variable.")
+            sys.exit(1)
+        
         # Load vector store (persistent Chroma)
         print("Loading vector store...")
-        vector_store = ChromaVectorStore()
+        vector_store = ChromaVectorStore(
+            persist_directory=config.vector_store.persist_directory,
+            collection_name=config.vector_store.collection_name,
+            api_key=config.openai_api_key,
+            embedding_model=config.embedding.model
+        )
         
         # Check if vector store has any documents
         try:
@@ -47,12 +54,12 @@ def main():
             sys.exit(1)
         
         # Initialize LLM
-        print(f"Initializing {MODEL_NAME} model...")
-        llm = init_chat_model(MODEL_NAME, model_provider=MODEL_PROVIDER)
+        print(f"Initializing {config.llm.model} model...")
+        llm = init_chat_model(config.llm.model, model_provider=config.llm.provider)
         
         # Build LangGraph
         print("Building RAG graph...")
-        graph = build_langgraph(vector_store, llm)
+        graph = build_langgraph(vector_store, llm, config)
         
         print("\n" + "="*50)
         print("Ready to answer questions!")

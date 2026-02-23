@@ -15,27 +15,37 @@ class IngestPipeline:
     def __init__(
         self,
         vector_store: ChromaVectorStore,
-        chunk_size: int = 1000,
-        chunk_overlap: int = 200,
-        enable_transform: bool = True
+        config,
+        enable_transform: Optional[bool] = None
     ):
         """
         Initialize the ingestion pipeline.
         
         Args:
             vector_store: Chroma vector store instance
-            chunk_size: Chunk size for splitting documents
-            chunk_overlap: Chunk overlap for splitting documents
-            enable_transform: Whether to enable LLM-based postprocessing
+            config: Configuration object from config_loader
+            enable_transform: Whether to enable LLM-based postprocessing (overrides config if provided)
         """
         self.vector_store = vector_store
-        self.chunk_size = chunk_size
-        self.chunk_overlap = chunk_overlap
-        self.enable_transform = enable_transform
+        self.config = config
+        self.enable_transform = enable_transform if enable_transform is not None else config.ingestion.enable_transform
+        self.db_path = config.storage.sqlite_db_path
         
         # Initialize components (can be reused across multiple sources)
-        self.postprocessor = PostProcessor() if enable_transform else None
-        self.embedding_gen = DenseEmbeddings()
+        if self.enable_transform:
+            self.postprocessor = PostProcessor(
+                model_name=config.llm.transform_model,
+                model_provider=config.llm.provider,
+                max_retries=config.ingestion.postprocessor_max_retries
+            )
+        else:
+            self.postprocessor = None
+        
+        self.embedding_gen = DenseEmbeddings(
+            api_key=config.openai_api_key,
+            model=config.embedding.model,
+            batch_size=config.embedding.batch_size
+        )
     
     def process_single_source(self, source: str) -> int:
         """
@@ -51,6 +61,7 @@ class IngestPipeline:
         
         # (1) Load content from the source
         loader = LoaderFactory.create_loader(source)
+        loader.db_path = self.db_path  # Set db_path for the loader
         docs, source_hash, should_skip = loader.load()
         
         if should_skip:
@@ -59,13 +70,16 @@ class IngestPipeline:
         
         if not docs:
             print(f"[IngestPipeline] No content loaded")
-            record_ingestion(source_hash, source, "failed", 0)
+            record_ingestion(source_hash, source, "failed", self.db_path, 0)
             return 0
         
         print(f"[IngestPipeline] Loaded {len(docs)} document(s)")
         
         # (2) Split the documents into chunks
-        chunker = Chunker(chunk_size=self.chunk_size, chunk_overlap=self.chunk_overlap)
+        chunker = Chunker(
+            chunk_size=self.config.ingestion.chunk_size,
+            chunk_overlap=self.config.ingestion.chunk_overlap
+        )
         chunks = chunker.split(docs)
         print(f"[IngestPipeline] Split into {len(chunks)} chunks")
         
@@ -78,7 +92,9 @@ class IngestPipeline:
         print(f"[IngestPipeline] Generating embeddings...")
         
         # Get existing content hashes to avoid duplicate embeddings
-        existing_hashes = self.vector_store.get_existing_chunk_hashes()
+        existing_hashes = self.vector_store.get_existing_chunk_hashes(
+            limit=self.config.ingestion.vector_store_hash_limit
+        )
         
         # Generate embeddings
         dense_embeddings, content_hashes = self.embedding_gen.generate_embeddings(
@@ -101,7 +117,7 @@ class IngestPipeline:
         print(f"[IngestPipeline] Storage complete")
         
         # Record ingestion
-        record_ingestion(source_hash, source, "success", len(chunks))
+        record_ingestion(source_hash, source, "success", self.db_path, len(chunks))
         print(f"[IngestPipeline] Ingestion complete")
         
         return len(chunks)

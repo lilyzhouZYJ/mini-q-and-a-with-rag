@@ -11,10 +11,18 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 class Chunker:
     def __init__(
         self,
-        chunk_size: int = 1000,
-        chunk_overlap: int = 200,
+        chunk_size: int,
+        chunk_overlap: int,
         separators: Optional[List[str]] = None
     ):
+        """
+        Initialize the chunker.
+        
+        Args:
+            chunk_size: Size of chunks
+            chunk_overlap: Overlap between chunks
+            separators: Optional list of separators for splitting
+        """
         # Use LangChain's RecursiveCharacterTextSplitter
         self.chunker = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,

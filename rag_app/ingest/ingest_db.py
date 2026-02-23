@@ -17,17 +17,18 @@ from datetime import datetime
 from typing import Optional
 from pathlib import Path
 
-from config import SQLITE_DB_PATH
-
-def get_db_connection() -> sqlite3.Connection:
+def get_db_connection(db_path: str) -> sqlite3.Connection:
     """
     Get a connection to the SQLite database, creating it if needed.
+    
+    Args:
+        db_path: Path to the SQLite database file
     """
     # Ensure directory exists
-    db_path = Path(SQLITE_DB_PATH)
-    db_path.parent.mkdir(parents=True, exist_ok=True)
+    db_path_obj = Path(db_path)
+    db_path_obj.parent.mkdir(parents=True, exist_ok=True)
     
-    conn = sqlite3.connect(SQLITE_DB_PATH)
+    conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     _init_db(conn)
     return conn
@@ -50,12 +51,16 @@ def _init_db(conn: sqlite3.Connection) -> None:
     """)
     conn.commit()
 
-def check_if_file_hash_exists(file_hash: str) -> Optional[dict]:
+def check_if_file_hash_exists(file_hash: str, db_path: str) -> Optional[dict]:
     """
     Check if the file hash exists in the ingestion history.
     Return the ingestion record if found, None otherwise.
+    
+    Args:
+        file_hash: SHA256 hash of the file
+        db_path: Path to the SQLite database file
     """
-    conn = get_db_connection()
+    conn = get_db_connection(db_path)
     try:
         cursor = conn.execute(
             "SELECT * FROM ingestion_history WHERE file_hash = ?",
@@ -72,6 +77,7 @@ def record_ingestion(
     file_hash: str,
     source_path: str,
     status: str,
+    db_path: str,
     chunk_count: int = 0
 ) -> None:
     """
@@ -81,9 +87,10 @@ def record_ingestion(
         file_hash: SHA256 hash of the file
         source_path: Path of the source file
         status: Status of ingestion ('success', 'failed', 'processing')
+        db_path: Path to the SQLite database file
         chunk_count: Number of chunks created (default: 0)
     """
-    conn = get_db_connection()
+    conn = get_db_connection(db_path)
     try:
         conn.execute("""
             INSERT OR REPLACE INTO ingestion_history 

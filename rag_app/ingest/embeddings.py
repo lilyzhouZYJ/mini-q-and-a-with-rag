@@ -9,15 +9,21 @@ from typing import List, Tuple
 from langchain.schema import Document
 from langchain_openai import OpenAIEmbeddings
 
-from config import OPENAI_API_KEY, EMBEDDING_MODEL_NAME, EMBEDDING_BATCH_SIZE
-
 class DenseEmbeddings:
-    def __init__(self):
+    def __init__(self, api_key: str, model: str, batch_size: int):
+        """
+        Initialize the embeddings generator.
+        
+        Args:
+            api_key: OpenAI API key
+            model: Embedding model name
+            batch_size: Batch size for embedding generation
+        """
         self.embeddings = OpenAIEmbeddings(
-            openai_api_key=OPENAI_API_KEY,
-            model=EMBEDDING_MODEL_NAME
+            openai_api_key=api_key,
+            model=model
         )
-        self.batch_size = EMBEDDING_BATCH_SIZE
+        self.batch_size = batch_size
     
     @staticmethod
     def _calculate_chunk_hash(chunk: Document) -> str:

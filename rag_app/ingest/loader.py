@@ -14,12 +14,14 @@ from langchain.schema import Document
 from ingest_db import check_if_file_hash_exists
 
 class Loader(ABC):
-    def __init__(self, source: str):
+    def __init__(self, source: str, db_path: str):
         """
         Initialize the loader.
         Source is the file path.
+        db_path is the path to the SQLite database for checking ingestion history.
         """
         self.source = source
+        self.db_path = db_path
     
     @staticmethod
     def _calculate_file_hash(file_path: str) -> str:
@@ -38,7 +40,7 @@ class Loader(ABC):
         Check if the source can be skipped (already processed).
         Return true if yes.
         """
-        existing = check_if_file_hash_exists(source_hash)
+        existing = check_if_file_hash_exists(source_hash, self.db_path)
         return existing is not None and existing.get('status') == 'success'
     
     @abstractmethod
@@ -113,4 +115,4 @@ class LoaderFactory:
         
         file_type = cls._get_file_type(file_path)
         if file_type == 'text':
-            return TextFileLoader(source)
+            return TextFileLoader(source, db_path="")  # db_path will be set by ingest_pipeline
