@@ -89,6 +89,14 @@ class IngestPipeline:
         
         # (5) Storage
         print(f"[IngestPipeline] Storing in vector database...")
+        
+        # Delete old chunks from the same source before upserting new ones
+        # This ensures we don't accumulate stale chunks when documents are modified
+        if chunks:
+            source_path = chunks[0].metadata.get('source_path')
+            if source_path:
+                self.vector_store.delete_chunks_by_source_path(source_path)
+        
         self.vector_store.upsert_chunks(chunks, dense_embeddings, content_hashes)
         print(f"[IngestPipeline] Storage complete")
         

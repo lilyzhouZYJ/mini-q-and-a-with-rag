@@ -1,7 +1,5 @@
 # Document Ingestion Documentation
 
-## Overview
-
 The ingestion process transforms raw text files into searchable vector embeddings stored in a persistent vector database. The pipeline processes documents through several stages: loading, chunking, post-processing, embedding generation, and storage.
 
 ## Ingestion Pipeline
@@ -35,7 +33,7 @@ The loader is responsible for reading text files from the filesystem.
 
 #### Features
 - **File Hash Calculation**: Uses SHA256 to calculate file hashes for deduplication
-- **Duplicate Detection**: Checks ingestion history to skip already-processed files
+- **Duplicate Detection**: Checks ingestion history to skip already-processed files (based on file content hash)
 - **Metadata Extraction**: Extracts file path, title, and document type
 
 #### Classes
@@ -127,6 +125,7 @@ Stores chunks and embeddings in ChromaDB for retrieval.
 - **Persistent Storage**: Data persists across sessions
 - **Unique Chunk IDs**: Generated from source path, chunk index, and content hash
 - **Metadata Preservation**: All chunk metadata is stored
+- **Stale data cleanup**: Before inserting chunks from a newly modified document, we first delete all existing chunks for that file path, to ensure that the database cleans up stale data
 - **Similarity Search**: Uses cosine similarity for retrieval
 
 #### ChromaDB Configuration

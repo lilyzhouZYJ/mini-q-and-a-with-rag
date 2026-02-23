@@ -118,3 +118,33 @@ class ChromaVectorStore:
                     hashes.add(metadata['chunk_hash'])
         
         return hashes
+    
+    def delete_chunks_by_source_path(self, source_path: str) -> int:
+        """
+        Delete all chunks with the given source_path from the vector store.
+        This is used to remove old chunks when re-ingesting a modified document.
+        
+        Args:
+            source_path: The source path to match against chunk metadata
+            
+        Returns:
+            Number of chunks deleted
+        """
+        print(f"[VectorStore] Deleting existing chunks for source_path: {source_path}")
+        # First, get all chunks with this source_path to count them
+        results = self.collection.get(
+            where={"source_path": source_path},
+            limit=10000
+        )
+        
+        if not results['ids'] or len(results['ids']) == 0:
+            print(f"[VectorStore] No chunks found for source_path: {source_path}")
+            return 0
+        
+        count = len(results['ids'])
+        
+        # Delete all chunks with this source_path
+        self.collection.delete(where={"source_path": source_path})
+        print(f"[VectorStore] Deleted {count} old chunk(s) with source_path: {source_path}")
+        
+        return count
